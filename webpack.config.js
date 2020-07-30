@@ -1,37 +1,14 @@
-const path = require('path')
 const webpack = require('webpack')
-
-const Default = () => {
-  return {
-    devtool: 'source-map',
-    output: {
-      globalObject: '(typeof self !== "undefined" ? self : this)', // make it works for both node and browser
-      libraryTarget: 'umd2',
-      library: ["Wenyan", "[name]"],
-      path: path.resolve(__dirname, 'dist'),
-      filename: '[name]/index.min.js',
-    },
-    resolve: {
-      extensions: ['.ts', '.js'],
-    },
-    module: {
-      rules: [
-        {
-          test: /\.wy$/i,
-          use: 'raw-loader',
-        },
-      ],
-    },
-  }
-};
+const { baseConfig, defaultPlugins, DtsBundlePlugin } = require('./webpack.base.config')
 
 const Cli = {
-  ...Default(),
+  ...baseConfig(),
   target: 'node',
   entry: {
-    cli: './src/cli.js',
+    cli: './src/cli.ts',
   },
   plugins: [
+    ...defaultPlugins(),
     new webpack.BannerPlugin({
       banner: '#!/usr/bin/env node',
       raw: true,
@@ -39,23 +16,33 @@ const Cli = {
   ],
   mode: "development",
   optimization: {
-		minimize: false,
-	},
+    minimize: false,
+  },
 }
 
 const Core = {
-  ...Default(),
+  ...baseConfig(),
   entry: {
-    core: './src/parser.js',
-  }
+    core: './src/parser.ts',
+  },
+  plugins: [
+    ...defaultPlugins(),
+    new DtsBundlePlugin({
+      name: '@wenyan/core',
+      baseDir: 'typings/src',
+      main: 'typings/src/parser.d.ts',
+      out: '../../dist/core/index.d.ts',
+    })
+  ]
 }
 
 Core.output.library = 'Wenyan'
 
 const Utils = {
-  ...Default(),
+  ...baseConfig(),
   entry: {
-    render: './src/render.js',
+    render: './src/render.ts',
+    runtime: './src/browser_runtime.ts',
   }
 }
 
